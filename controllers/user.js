@@ -1,8 +1,10 @@
 const User = require('../models/User')
+const {StatusCodes} = require('http-status-codes')
 
 
 const createUser = async(req, res)=>{
-    res.send('create user')
+    const user = await User.create(req.body)
+    res.status(StatusCodes.CREATED).json({ user })
 }
 
 const getAllUsers =async (req, res)=>{
