@@ -52,9 +52,12 @@ const UserSchema =new mongoose.Schema({
     },
     accountNumber: {
         type: String,
-        required: true,
+        // required: true,
         unique: true
     },
+    pin: {
+        type: Number,
+    }
 })
 
 function generateUniqueAccountNumber(){

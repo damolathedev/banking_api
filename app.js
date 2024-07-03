@@ -28,7 +28,7 @@ app.get('/', (req, res)=>{
     res.send('Bank api')
 })
 
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 8080 || 3000
 
 const start= async()=>{
     try {
