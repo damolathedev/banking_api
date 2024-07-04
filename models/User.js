@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 const validator = require('validator');
 const {parsePhoneNumberFromString} = require('libphonenumber-js')
@@ -48,7 +49,8 @@ const UserSchema =new mongoose.Schema({
                 return phoneNUmber && phoneNUmber.isValid()
             },
             message: props => `${props.value} is not a valid phone number!`
-        }
+        },
+        unique: [true, 'user wiht phone number alreadu exist, consider loging in']
     },
     accountNumber: {
         type: String,
@@ -56,8 +58,16 @@ const UserSchema =new mongoose.Schema({
         unique: true
     },
     pin: {
-        type: Number,
+        type: String,
+        required:true
     }
+},{
+    toJSON:{virtuals:true},
+    toObject:{virtuals:true}
+})
+
+UserSchema.virtual('fullName').get(function(){
+    return `${this.firstName} ${this.middleName ? this.middleName : ''} ${this.lastName}`
 })
 
 function generateUniqueAccountNumber(){
@@ -81,5 +91,17 @@ UserSchema.pre('save', async function(next){
     }
     next()
 })
+
+UserSchema.pre('save', async function(){
+    // console.log(this.modifiedPaths())
+    if(!this.isModified('pin')) return;
+    const salt = await bcrypt.genSalt(10)
+    this.pin = await bcrypt.hash(this.pin, salt)
+})
+
+UserSchema.methods.comparePin = async function(candidatePin){
+    const isMatch = await bcrypt.compare(candidatePin, this.pin)
+    return isMatch
+}
 
 module.exports = mongoose.model('User', UserSchema)

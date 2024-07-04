@@ -13,7 +13,10 @@ const generateDeviceIdentifier = async(req, res, next) => {
   hash.update(uniqueString);
   req.deviceIdentifier = hash.digest('hex');
 
-  const existingDevice = await devicePixelRatio.findOne({})
+  const existingDevice = await Device.findOne({})
+  console.log(req.session)
+
+  // return existingDevice
 
   next();
 };

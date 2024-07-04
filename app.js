@@ -4,6 +4,8 @@ require('express-async-errors')
 // express
 const express = require('express')
 const app = express()
+const morgan = require('morgan')
+const cookieParser = require('cookie-parser')
 
 // database
 const conectDB = require('./db/connectDB')
@@ -17,6 +19,8 @@ const errorHandlingMiddleware = require('./middleware/error-handler')
 
 
 app.use(express.json())
+app.use(cookieParser(process.env.JWT_SECRET))
+app.use(morgan('tiny'))
 
 //
 app.use('/api/v1', userRoute)
