@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 const validator = require('validator');
 const {parsePhoneNumberFromString} = require('libphonenumber-js')
+const crypto = require('crypto');
+const {isTokenValid} = require('../utils')
 
 const UserSchema =new mongoose.Schema({
     firstName:{
@@ -60,7 +62,11 @@ const UserSchema =new mongoose.Schema({
     pin: {
         type: String,
         required:true
-    }
+    },
+    deviceIdentifier: {
+        type:String,
+        // default:"device"
+      }
 },{
     toJSON:{virtuals:true},
     toObject:{virtuals:true}
@@ -92,15 +98,22 @@ UserSchema.pre('save', async function(next){
     next()
 })
 
-UserSchema.pre('save', async function(){
+
+UserSchema.pre('save', async function(next){
     // console.log(this.modifiedPaths())
     if(!this.isModified('pin')) return;
     const salt = await bcrypt.genSalt(10)
     this.pin = await bcrypt.hash(this.pin, salt)
+    next()
 })
 
 UserSchema.methods.comparePin = async function(candidatePin){
     const isMatch = await bcrypt.compare(candidatePin, this.pin)
+    return isMatch
+}
+
+UserSchema.methods.compareDevice = async function(candidatePin){
+    const isMatch = await bcrypt.compare(device, this.deviceIdentifier)
     return isMatch
 }
 

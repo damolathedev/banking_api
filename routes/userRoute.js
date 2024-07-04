@@ -5,10 +5,9 @@ const {
     login,
     logOut
 } = require('../controllers/userController')
-const deviceMiddleware = require('../middleware/device-middleware')
 
 router.route('/register').post(createUser)
-router.route('/login').post(deviceMiddleware, login)
+router.route('/login').post(login)
 router.route('/logout').get(logOut)
 
 module.exports = router

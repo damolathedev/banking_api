@@ -2,6 +2,7 @@ const User = require('../models/User')
 const {attachCookiesToResponse, createTokenUser} = require('../utils')
 const {StatusCodes} = require('http-status-codes')
 const CustomError = require('../error')
+const getDeviceInfo = require('../middleware/getDeviceInfo')
 
 
 const createUser = async(req, res)=>{
@@ -11,6 +12,8 @@ const createUser = async(req, res)=>{
     delete userObject.pin;
     const tokenUser = createTokenUser(userObject)
     attachCookiesToResponse({res, user:tokenUser})
+    user.deviceIdentifier = await getDeviceInfo(req)
+    await user.save()
     res.status(StatusCodes.CREATED).json({ user })
 }
 
@@ -28,8 +31,16 @@ const login = async(req, res)=>{
     if(!isPinCorrect){
         throw new CustomError.UnauthenticatedError('Invalid Cridentials')
     }
+    // const deviceInfo = await getDeviceInfo(req)
+    const deviceInfo = 'qwertyuiop'
+    if(user.deviceIdentifier !== deviceInfo){
+        console.log("2fa");
+        res.send("2fa")
+        return
+    }
     const tokenUser = createTokenUser(user)
     attachCookiesToResponse({res, user:tokenUser})
+    
     res.status(StatusCodes.OK).json({ user:tokenUser })
 }
 

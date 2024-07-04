@@ -6,6 +6,9 @@ const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cookieParser = require('cookie-parser')
+const qrcode = require('qrcode')
+const speakeasy = require('speakeasy')
+const session = require('express-session')
 
 // database
 const conectDB = require('./db/connectDB')
@@ -19,6 +22,7 @@ const errorHandlingMiddleware = require('./middleware/error-handler')
 
 
 app.use(express.json())
+app.use(express.urlencoded({extended:true}))
 app.use(cookieParser(process.env.JWT_SECRET))
 app.use(morgan('tiny'))
 

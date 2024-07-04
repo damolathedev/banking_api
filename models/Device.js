@@ -5,7 +5,10 @@ const DeviceSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
       },
-      deviceIdentifier: String,
+      deviceIdentifier: {
+        type:String,
+        default:"device"
+      },
       lastUsed: Date
 })
 
