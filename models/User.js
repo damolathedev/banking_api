@@ -2,8 +2,8 @@ const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 const validator = require('validator');
 const {parsePhoneNumberFromString} = require('libphonenumber-js')
-const crypto = require('crypto');
-const {isTokenValid} = require('../utils')
+const compareProperty = require('../utils/compareProperty')
+
 
 const UserSchema =new mongoose.Schema({
     firstName:{
@@ -35,7 +35,6 @@ const UserSchema =new mongoose.Schema({
         type: String,
         required: true,
         minLength: [3, 'Name must not be less than three characters'],
-        maxlength: [20, 'Name must not be more than 20 cahracters'],
         validate: {
             validator: validator.isEmail,
             message: "Please provide a valid email"
@@ -66,6 +65,10 @@ const UserSchema =new mongoose.Schema({
     deviceIdentifier: {
         type:String,
         // default:"device"
+      },
+      twofactorCode:{
+        type: String,
+        default: "helloo"
       }
 },{
     toJSON:{virtuals:true},
@@ -100,20 +103,46 @@ UserSchema.pre('save', async function(next){
 
 
 UserSchema.pre('save', async function(next){
-    // console.log(this.modifiedPaths())
+    if(!this.isModified('deviceIdentifier')) return;
+    const salt = await bcrypt.genSalt(10)
+    this.deviceIdentifier = await bcrypt.hash(this.deviceIdentifier, salt)
+    next()
+})
+
+
+UserSchema.pre('save', async function(next){
     if(!this.isModified('pin')) return;
     const salt = await bcrypt.genSalt(10)
     this.pin = await bcrypt.hash(this.pin, salt)
     next()
 })
 
+UserSchema.pre('save', async function(next){
+    if(!this.isModified('twofactorCode')) return;
+    const salt = await bcrypt.genSalt(10)
+    this.twofactorCode = await bcrypt.hash(this.twofactorCode, salt)
+    next()
+})
+
+
+//remember you want to create a function to handle comparing data entry from user with the hashed one in the database
 UserSchema.methods.comparePin = async function(candidatePin){
     const isMatch = await bcrypt.compare(candidatePin, this.pin)
     return isMatch
 }
 
-UserSchema.methods.compareDevice = async function(candidatePin){
-    const isMatch = await bcrypt.compare(device, this.deviceIdentifier)
+//campare with the function created
+// UserSchema.methods.comparePin = function(data){
+//     compareProperty(data, this.pin)
+// }
+
+UserSchema.methods.compareDevice = async function(deviceInfo){
+    const isMatch = await bcrypt.compare(deviceInfo, this.deviceIdentifier)
+    return isMatch
+}
+
+UserSchema.methods.compareTwofactorCode = async function(twoFactorCode){
+    const isMatch = await bcrypt.compare(twoFactorCode, this.twoFactorCode)
     return isMatch
 }
 

@@ -23,6 +23,7 @@ const errorHandlingMiddleware = require('./middleware/error-handler')
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
+app.use(session({secret:process.env.JWT_SECRET, resave:false, saveUninitialized:true}))
 app.use(cookieParser(process.env.JWT_SECRET))
 app.use(morgan('tiny'))
 

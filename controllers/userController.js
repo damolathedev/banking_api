@@ -2,7 +2,8 @@ const User = require('../models/User')
 const {attachCookiesToResponse, createTokenUser} = require('../utils')
 const {StatusCodes} = require('http-status-codes')
 const CustomError = require('../error')
-const getDeviceInfo = require('../middleware/getDeviceInfo')
+const getDeviceInfo = require('../utils/getDeviceInfo')
+const send2FACode = require('../utils/2FACode')
 
 
 const createUser = async(req, res)=>{
@@ -23,9 +24,8 @@ const login = async(req, res)=>{
         throw new CustomError.BadRequestError('Please provide email and pin')
     }
     const user = await User.findOne({email})
-    // console.log(user);
     if(!user){
-        throw new CustomError.UnauthenticatedError('Phone number incorrect')
+        throw new CustomError.UnauthenticatedError('Invalid Cridentials')
     }
     const isPinCorrect = await user.comparePin(pin)
     if(!isPinCorrect){
@@ -33,14 +33,31 @@ const login = async(req, res)=>{
     }
     // const deviceInfo = await getDeviceInfo(req)
     const deviceInfo = 'qwertyuiop'
-    if(user.deviceIdentifier !== deviceInfo){
-        console.log("2fa");
-        res.send("2fa")
+    const isdeviceInfoCorrect = await user.compareDevice(deviceInfo)
+    const tokenUser = createTokenUser(user)
+    attachCookiesToResponse({res, user:tokenUser})
+    if(!isdeviceInfoCorrect){
+        res.redirect(StatusCodes.TEMPORARY_REDIRECT,'/verify-2fa')
+        send2FACode(user)
         return
+    }
+    
+    res.status(StatusCodes.OK).json({ user:tokenUser })
+}
+
+const verify2FA = async(req, res)=>{
+    const {code} = req.body
+    const {name, userId} = req.user
+    const user = await User.findOne({_id:userId})
+    if(!user){
+        throw new CustomError.UnauthorizedError('Routh not authorized')
+    }
+    const isTwofactorCodeCorrect = await user.compareTwofactorCode(code)
+    if(!isTwofactorCodeCorrect){
+        throw new CustomError.UnauthenticatedError('Invalid Cridentials')
     }
     const tokenUser = createTokenUser(user)
     attachCookiesToResponse({res, user:tokenUser})
-    
     res.status(StatusCodes.OK).json({ user:tokenUser })
 }
 
@@ -55,5 +72,6 @@ const logOut = async(req, res)=>{
 module.exports = {
     createUser,
     login,
+    verify2FA,
     logOut
 }
