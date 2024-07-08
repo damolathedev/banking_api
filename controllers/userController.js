@@ -31,8 +31,8 @@ const login = async(req, res)=>{
     if(!isPinCorrect){
         throw new CustomError.UnauthenticatedError('Invalid Cridentials')
     }
-    // const deviceInfo = await getDeviceInfo(req)
-    const deviceInfo = 'qwertyuiop'
+    const deviceInfo = await getDeviceInfo(req)
+    // const deviceInfo = 'qwertyuiop'
     const isdeviceInfoCorrect = await user.compareDevice(deviceInfo)
     const tokenUser = createTokenUser(user)
     attachCookiesToResponse({res, user:tokenUser})

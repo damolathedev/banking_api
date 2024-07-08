@@ -41,7 +41,7 @@ const UserSchema =new mongoose.Schema({
         },
         unique: [true, 'user with email already exist']
     },
-    phoneNUmber: {
+    phoneNumber: {
         type: String,
         required: true,
         validate: {
@@ -51,7 +51,7 @@ const UserSchema =new mongoose.Schema({
             },
             message: props => `${props.value} is not a valid phone number!`
         },
-        unique: [true, 'user wiht phone number alreadu exist, consider loging in']
+        unique: [true, 'user with phone number already exist, consider loging in']
     },
     accountNumber: {
         type: String,
@@ -126,8 +126,17 @@ UserSchema.pre('save', async function(next){
 
 
 //remember you want to create a function to handle comparing data entry from user with the hashed one in the database
-UserSchema.methods.comparePin = async function(candidatePin){
-    const isMatch = await bcrypt.compare(candidatePin, this.pin)
+// UserSchema.methods.comparePin = function(candidatePin){
+//     console.log(this.pin)
+//     bcrypt.compare(candidatePin, this.pin, function(err, isMatch){
+//         console.log(candidatePin, this.pin)
+//         if(err) return err;
+//         return isMatch
+//     })
+// }
+
+UserSchema.methods.comparePin = function(candidatePin){
+    const isMatch = bcrypt.compare(candidatePin, this.pin)
     return isMatch
 }
 
@@ -136,14 +145,32 @@ UserSchema.methods.comparePin = async function(candidatePin){
 //     compareProperty(data, this.pin)
 // }
 
-UserSchema.methods.compareDevice = async function(deviceInfo){
-    const isMatch = await bcrypt.compare(deviceInfo, this.deviceIdentifier)
+// UserSchema.methods.compareDevice = async function(deviceInfo){
+//     try {
+//         const isMatch = await bcrypt.compare(deviceInfo, this.deviceIdentifier)
+//         return isMatch
+//     } catch (error) {
+//         console.log(error)
+//     }
+// }
+
+// UserSchema.methods.compareDevice = function(candidateDevice) {
+//     bcrypt.compare(candidateDevice, this.deviceIdentifier, function(err, isMatch) {
+//         if (err) return err;
+//         return isMatch
+//     });
+// };
+
+UserSchema.methods.compareDevice = function(candidateDevice){
+    const isMatch = bcrypt.compare(candidateDevice, this.deviceIdentifier)
     return isMatch
 }
 
-UserSchema.methods.compareTwofactorCode = async function(twoFactorCode){
-    const isMatch = await bcrypt.compare(twoFactorCode, this.twoFactorCode)
+
+UserSchema.methods.compareTwofactorCode = function(twoFactorCode){
+    const isMatch = bcrypt.compare(twoFactorCode, this.twofactorCode)
     return isMatch
 }
+
 
 module.exports = mongoose.model('User', UserSchema)
