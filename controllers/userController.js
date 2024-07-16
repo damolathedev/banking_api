@@ -8,13 +8,8 @@ const send2FACode = require('../utils/2FACode')
 
 const createUser = async(req, res)=>{
     const user = await User.create(req.body)
-    //convert mongoose document to plain object so i can remove pin from the object
-    const userObject = user.toObject()
-    delete userObject.pin;
-    const tokenUser = createTokenUser(userObject)
+    const tokenUser = createTokenUser(user)
     attachCookiesToResponse({res, user:tokenUser})
-    user.deviceIdentifier = await getDeviceInfo(req)
-    await user.save()
     res.status(StatusCodes.CREATED).json({ user })
 }
 
@@ -33,31 +28,32 @@ const login = async(req, res)=>{
     }
     const deviceInfo = await getDeviceInfo(req)
     // const deviceInfo = 'qwertyuiop'
-    const isdeviceInfoCorrect = await user.compareDevice(deviceInfo)
+    const deviceRecorgnized = user.deviceIdentifiers.includes(deviceInfo)
+    
+    if(!deviceRecorgnized){
+        const twofactorCode = user.generateTwofactorCode()
+        await user.save()
+        await send2FACode(user.email, twofactorCode)
+        return res.status(StatusCodes.TEMPORARY_REDIRECT).json({ msg: '2FA code sent'})
+    }
     const tokenUser = createTokenUser(user)
     attachCookiesToResponse({res, user:tokenUser})
-    if(!isdeviceInfoCorrect){
-        res.redirect(StatusCodes.TEMPORARY_REDIRECT,'/verify-2fa')
-        send2FACode(user)
-        return
-    }
-    
     res.status(StatusCodes.OK).json({ user:tokenUser })
 }
 
 const verify2FA = async(req, res)=>{
-    const {code} = req.body
-    const {name, userId} = req.user
-    const user = await User.findOne({_id:userId})
-    if(!user){
-        throw new CustomError.UnauthorizedError('Routh not authorized')
+    const {code} = req.body;
+    const {userId} = req.user
+    const user = await User.findById(userId)
+    console.log(user);
+    if(!user || !(await user.compareTwofactorCode(code))){
+        throw new CustomError.UnauthenticatedError('Invalid 2FA code')
     }
-    const isTwofactorCodeCorrect = await user.compareTwofactorCode(code)
-    if(!isTwofactorCodeCorrect){
-        throw new CustomError.UnauthenticatedError('Invalid Cridentials')
-    }
+    user.deviceIdentifiers.push(getDeviceInfo(req))
+    await user.save()
+
     const tokenUser = createTokenUser(user)
-    attachCookiesToResponse({res, user:tokenUser})
+    attachCookiesToResponse({ res, user:tokenUser })
     res.status(StatusCodes.OK).json({ user:tokenUser })
 }
 

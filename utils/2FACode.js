@@ -1,36 +1,23 @@
 require('dotenv').config()
-const crypto = require('crypto')
-const nodemailer = require('nodemailer')
+const nodemailer = require('nodemailer');
 
-
-const transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.GMAIL_PASSWORD
-    }
-  });
-
-const send2FACode= async(user)=>{
-    const twoFactorCode = crypto.randomBytes(3).toString('hex')
-    user.twofactorCode = twoFactorCode
-
-    console.log(twoFactorCode)
+const send2FACode = async (email, code) => {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL,
+            pass: process.env.GMAIL_PASSWORD,
+        },
+    });
 
     const mailOptions = {
         from: process.env.EMAIL,
-        to: user.email,
-        subject: 'Your 2FA code',
-        text: `Your 2FA code is ${twoFactorCode}, Please do not share with anyone`
-    }
+        to: email,
+        subject: 'Your 2FA Code',
+        text: `Your 2FA code is ${code}`,
+    };
 
-    transporter.sendMail(mailOptions, (err, info)=>{
-        if(err){
-            console.log(err);
-        }else{
-            console.log('Email send: '+info.response)
-        }
-    })
-}
+    await transporter.sendMail(mailOptions);
+};
 
-module.exports = send2FACode
+module.exports = send2FACode;
