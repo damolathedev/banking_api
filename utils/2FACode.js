@@ -1,23 +1,13 @@
-require('dotenv').config()
-const nodemailer = require('nodemailer');
+const mail = require('./sendMail')
+// const mailClass = require('../test')
 
-const send2FACode = async (email, code) => {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL,
-            pass: process.env.GMAIL_PASSWORD,
-        },
-    });
+// const send2FACode = (email, code)=>{
+//     const mail = new mailClass(process.env.EMAIL, process.env.EMAIL_PASSWORD, email, '2FA',`Your 2FA code is ${code}`)
+//     return mail
+// }
 
-    const mailOptions = {
-        from: process.env.EMAIL,
-        to: email,
-        subject: 'Your 2FA Code',
-        text: `Your 2FA code is ${code}`,
-    };
+const send2FACode =(email,code)=>{
+    mail(email,'2FA',`Your 2FA code is ${code}`)
+}
 
-    await transporter.sendMail(mailOptions);
-};
-
-module.exports = send2FACode;
+module.exports = send2FACode

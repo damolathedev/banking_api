@@ -9,11 +9,13 @@ const cookieParser = require('cookie-parser')
 const qrcode = require('qrcode')
 const speakeasy = require('speakeasy')
 const session = require('express-session')
+const fileUpload = require('express-fileupload')
 
 // database
 const conectDB = require('./db/connectDB')
 
 // routes
+const authRoute = require('./routes/authRoute')
 const userRoute = require('./routes/userRoute')
 
 //middleware
@@ -22,12 +24,14 @@ const errorHandlingMiddleware = require('./middleware/error-handler')
 
 
 app.use(express.json())
+app.use(fileUpload( { useTempFiles:true } ))
 app.use(express.urlencoded({extended:true}))
 app.use(session({secret:process.env.JWT_SECRET, resave:false, saveUninitialized:true}))
 app.use(cookieParser(process.env.JWT_SECRET))
 app.use(morgan('tiny'))
 
 //
+app.use('/api/v1', authRoute)
 app.use('/api/v1', userRoute)
 
 app.use(notFoundMiddleware)
